@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
 @Component({
-  selector: 'lib-lk-grid',
+  selector: 'lk-grid',
   template: `
     <p>
       lk-grid works!
