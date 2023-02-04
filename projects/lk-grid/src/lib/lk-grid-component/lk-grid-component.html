@@ -1,0 +1,43 @@
+<!-- Toolbar -->
+<div class="lk-datagrid-toolbar">
+</div>
+
+<!-- Main -->
+<div class="lk-datagrid-main" >
+    <div #columnHeaders class="lk-datagrid-column-headers">
+       <div class="lk-datagrid-column-headers-content">
+            <table #columnHeadersTable>
+                <thead>
+                    <tr>
+                        <th class="lk-datagrid-column-header" *ngFor="let columnDef of columnDefs">
+                            <span class="lk-datagrid-column-title">
+                                {{ columnDef.title }}
+                            </span>
+                        </th>
+                    </tr>
+                </thead>
+            </table>
+       </div>
+    </div>
+
+    <div class="lk-datagrid-list">
+        <div #listContent class="lk-datagrid-list-content" (scroll)="onListTableScroll($event)">
+            <table #listTable >
+                <tbody>
+                    <tr *ngFor="let item of data">
+                        <td class="lk-datagrid-cell" *ngFor="let columnDef of columnDefs" >
+                            <span class="lk-datagrid-value">
+                                {{ item[columnDef.field] }}
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+          
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="lk-datagrid-footer">
+</div>

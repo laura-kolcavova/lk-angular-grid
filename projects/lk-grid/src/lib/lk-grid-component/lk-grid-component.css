@@ -1,0 +1,104 @@
+:host{
+    --border-color:  rgb(224, 224, 224);
+
+    --column-headers-bg-color: #fafafa;
+
+    --list-bg-color: #ffffff;
+    --list-bg-color-second: #fafafa;
+}
+
+:host(.lk-datagrid) {
+    display: flex;
+    flex-direction: column;
+
+    font-family: Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 400;
+
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+
+    box-sizing: border-box;
+}
+
+:host(.lk-datagrid) table {
+    width: 100%;
+    border-spacing: 0;
+    table-layout: fixed;
+    empty-cells: show;
+}
+
+:host(.lk-datagrid) th,
+:host(.lk-datagrid) td {
+    border-width: 0;
+    border-style: solid;
+    border-color: var(--border-color);
+    padding: 8px 12px;
+    font-weight: normal;
+    text-align: left;
+
+    min-width: 100px;
+
+}
+
+:host(.lk-datagrid) td,
+:host(.lk-datagrid) th {    
+    border-left-width: 1px;
+}
+
+:host(.lk-datagrid) td:first-child,
+:host(.lk-datagrid) th:first-child {
+    border-left-width: 0;
+}
+
+.lk-datagrid-main {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.lk-datagrid-column-headers {
+    background-color: var(--column-headers-bg-color);
+    border-bottom: 1px solid var(--border-color);
+    flex: 0 0 auto;
+
+    display: flex;
+    /* flex-direction: row;
+    align-items: stretch; */
+}
+
+.lk-datagrid-column-headers-content {
+    flex: 1 1 auto;
+
+    /* display: inline-block;
+    vertical-align: top; */
+    /* width: 100%; */
+    
+
+    overflow: hidden;
+}
+
+.lk-datagrid-list {
+    background-color: var(--list-bg-color);
+    display: flex;
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+
+.lk-datagrid-list-content {
+    flex: 1 1 auto;
+
+    /* display: inline-block;
+    vertical-align: top;
+    width: 100%; */
+
+    min-height: 0;
+
+    overflow: auto;
+    overflow-y: scroll;
+    overflow-x: auto;
+}
+
+.lk-datagrid-list tr:nth-child(2n) {
+    background-color: var(--list-bg-color-second)
+}
