@@ -7,9 +7,12 @@
     <div #columnHeaders class="lk-datagrid-column-headers">
        <div class="lk-datagrid-column-headers-content">
             <table #columnHeadersTable>
+                <colgroup>
+                    <col *ngFor="let size of columnSizes" [style.width.px]="size" />
+                </colgroup>
                 <thead>
                     <tr>
-                        <th class="lk-datagrid-column-header" *ngFor="let columnDef of columnDefs">
+                        <th class="lk-datagrid-column-header" *ngFor="let columnDef of columnDefs; index as i" >
                             <span class="lk-datagrid-column-title">
                                 {{ columnDef.title }}
                             </span>
@@ -22,17 +25,23 @@
 
     <div class="lk-datagrid-list">
         <div #listContent class="lk-datagrid-list-content" (scroll)="onListTableScroll($event)">
-            <table #listTable >
-                <tbody>
-                    <tr *ngFor="let item of data">
-                        <td class="lk-datagrid-cell" *ngFor="let columnDef of columnDefs" >
-                            <span class="lk-datagrid-value">
-                                {{ item[columnDef.field] }}
-                            </span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div #listTableWrapper class="lk-datagrid-list-table-wrapper">
+                <table #listTable>
+                    <colgroup>
+                        <col *ngFor="let size of columnSizes" [style.width.px]="size" />
+                    </colgroup>
+                    <tbody>
+                        <tr *ngFor="let item of data">
+                            <td class="lk-datagrid-cell" *ngFor="let columnDef of columnDefs" >
+                                <span class="lk-datagrid-value">
+                                    {{ item[columnDef.field] }}
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
           
         </div>
     </div>

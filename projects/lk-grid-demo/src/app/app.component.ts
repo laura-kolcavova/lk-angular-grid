@@ -13,6 +13,9 @@ export class AppComponent {
   columnDefs: ColumnDefinition[] = [
     { field: 'ProductID', title: 'ID' },
     { field: 'ProductName', title: 'Name' },
+    { field: 'ProductName', title: 'Name' },
+    { field: 'ProductName', title: 'Name' },
+    { field: 'ProductName', title: 'Name' },
     { field: 'UnitsInStock', title: 'Count' },
     { field: 'UnitPrice', title: 'Price' },
   ];

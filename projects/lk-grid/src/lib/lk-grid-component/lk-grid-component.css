@@ -5,6 +5,7 @@
 
     --list-bg-color: #ffffff;
     --list-bg-color-second: #fafafa;
+    --list-bg-color-hover: #ededed;
 }
 
 :host(.lk-datagrid) {
@@ -23,7 +24,6 @@
 :host(.lk-datagrid) table {
     width: 100%;
     border-spacing: 0;
-    table-layout: fixed;
     empty-cells: show;
 }
 
@@ -35,9 +35,9 @@
     padding: 8px 12px;
     font-weight: normal;
     text-align: left;
-
-    min-width: 100px;
-
+    box-sizing: border-box;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 :host(.lk-datagrid) td,
@@ -48,6 +48,10 @@
 :host(.lk-datagrid) td:first-child,
 :host(.lk-datagrid) th:first-child {
     border-left-width: 0;
+}
+
+.lk-datagrid-table-fixed {
+    table-layout: fixed;
 }
 
 .lk-datagrid-main {
@@ -61,20 +65,11 @@
     background-color: var(--column-headers-bg-color);
     border-bottom: 1px solid var(--border-color);
     flex: 0 0 auto;
-
     display: flex;
-    /* flex-direction: row;
-    align-items: stretch; */
 }
 
 .lk-datagrid-column-headers-content {
     flex: 1 1 auto;
-
-    /* display: inline-block;
-    vertical-align: top; */
-    /* width: 100%; */
-    
-
     overflow: hidden;
 }
 
@@ -87,13 +82,7 @@
 
 .lk-datagrid-list-content {
     flex: 1 1 auto;
-
-    /* display: inline-block;
-    vertical-align: top;
-    width: 100%; */
-
     min-height: 0;
-
     overflow: auto;
     overflow-y: scroll;
     overflow-x: auto;
@@ -101,4 +90,8 @@
 
 .lk-datagrid-list tr:nth-child(2n) {
     background-color: var(--list-bg-color-second)
+}
+
+.lk-datagrid-list tr:hover {
+    background-color: var(--list-bg-color-hover);
 }
