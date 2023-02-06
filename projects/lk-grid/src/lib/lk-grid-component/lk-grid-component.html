@@ -6,13 +6,14 @@
 <div class="lk-datagrid-main" >
     <div #columnHeaders class="lk-datagrid-column-headers">
        <div class="lk-datagrid-column-headers-content">
-            <table #columnHeadersTable>
+            <table #columnHeadersTable 
+                   [style.transform]="getColumnHeadersTransformValue()">
                 <colgroup>
                     <col *ngFor="let size of columnSizes" [style.width.px]="size" />
                 </colgroup>
                 <thead>
                     <tr>
-                        <th class="lk-datagrid-column-header" *ngFor="let columnDef of columnDefs; index as i" >
+                        <th class="lk-datagrid-column-header" *ngFor="let columnDef of columnDefs" >
                             <span class="lk-datagrid-column-title">
                                 {{ columnDef.title }}
                             </span>
@@ -25,13 +26,20 @@
 
     <div class="lk-datagrid-list">
         <div #listContent class="lk-datagrid-list-content" (scroll)="onListTableScroll($event)">
-            <div #listTableWrapper class="lk-datagrid-list-table-wrapper">
-                <table #listTable>
+            <div #listTableWrapper 
+                 class="lk-datagrid-list-table-wrapper"
+                 [style.height.px]="listContentTotalHeight" >
+                <table #listTable
+                       [style.transform]="getListTableTransformValue()">
                     <colgroup>
                         <col *ngFor="let size of columnSizes" [style.width.px]="size" />
                     </colgroup>
                     <tbody>
-                        <tr *ngFor="let item of data">
+                        <tr *ngFor="let item of virtualData; index as rowIndex"
+                            [style.height.px]="itemHeight"
+                            [ngClass]="{'lk-datagrid-table-row-odd': (startIndex + rowIndex) % 2 !== 0}"
+                            attr.data-lk-datagrid-row-index="{{rowIndex + 1}}"
+                            attr.data-lk-datagrid-item-index="{{startIndex + rowIndex + 1}}">
                             <td class="lk-datagrid-cell" *ngFor="let columnDef of columnDefs" >
                                 <span class="lk-datagrid-value">
                                     {{ item[columnDef.field] }}
@@ -40,9 +48,7 @@
                         </tr>
                     </tbody>
                 </table>
-            </div>
-            
-          
+            </div>        
         </div>
     </div>
 </div>

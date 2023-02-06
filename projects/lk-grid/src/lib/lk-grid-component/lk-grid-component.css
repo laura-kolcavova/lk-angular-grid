@@ -16,7 +16,7 @@
     font-weight: 400;
 
     border: 1px solid var(--border-color);
-    border-radius: 4px;
+    /* border-radius: 4px; */
 
     box-sizing: border-box;
 }
@@ -71,6 +71,7 @@
 .lk-datagrid-column-headers-content {
     flex: 1 1 auto;
     overflow: hidden;
+    border-right: 1px solid var(--border-color);
 }
 
 .lk-datagrid-list {
@@ -88,7 +89,7 @@
     overflow-x: auto;
 }
 
-.lk-datagrid-list tr:nth-child(2n) {
+.lk-datagrid-table-row-odd {
     background-color: var(--list-bg-color-second)
 }
 
