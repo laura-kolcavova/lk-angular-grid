@@ -25,17 +25,17 @@
     </div>
 
     <div class="lk-datagrid-list">
-        <div #listContent class="lk-datagrid-list-content" (scroll)="onListTableScroll($event)">
+        <div #listViewport class="lk-datagrid-list-viewport" (scroll)="onListTableScroll($event)">
             <div #listTableWrapper 
                  class="lk-datagrid-list-table-wrapper"
-                 [style.height.px]="listContentTotalHeight" >
+                 [style.height.px]="totalContentHeight" >
                 <table #listTable
                        [style.transform]="getListTableTransformValue()">
                     <colgroup>
                         <col *ngFor="let size of columnSizes" [style.width.px]="size" />
                     </colgroup>
                     <tbody>
-                        <tr *ngFor="let item of virtualData; index as rowIndex"
+                        <tr *ngFor="let item of bufferedItems; index as rowIndex"
                             [style.height.px]="itemHeight"
                             [ngClass]="{'lk-datagrid-table-row-odd': (startIndex + rowIndex) % 2 !== 0}"
                             attr.data-lk-datagrid-row-index="{{rowIndex + 1}}"

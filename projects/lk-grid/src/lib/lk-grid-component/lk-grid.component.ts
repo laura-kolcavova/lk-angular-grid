@@ -8,23 +8,24 @@ import { ColumnDefinition } from '../ColumnDefinition';
 })
 export class LkGridComponent implements OnInit {
 
+  // Input properties for grid view
   @Input() columnDefs!: ColumnDefinition[];
 
   @Input() data!: any[];
 
+  // Input properties for virutal scrolling
   @Input() height!: number;
 
   @Input() itemHeight!: number;
 
-  @Input() itemTolerance!: number;
-
+  // DOM bindings
   @HostBinding("style.height.px") hostHeight!: number;
 
   @ViewChild('columnHeaders') columnHeaders!: ElementRef<HTMLElement>;
 
   @ViewChild('columnHeadersTable') columnHeadersTable!: ElementRef<HTMLElement>;
  
-  @ViewChild('listContent') listContent! : ElementRef<HTMLElement>;
+  @ViewChild('listViewport') listViewport! : ElementRef<HTMLElement>;
 
   // List table wrapper must be parent of list table to get width of scrollbar
   // when the list table is larger than list content
@@ -32,19 +33,25 @@ export class LkGridComponent implements OnInit {
 
   @ViewChild('listTable') listTable! : ElementRef<HTMLElement>;
 
+  // Properties for grid view
   public columnSizes: number[] = [];
 
-  public listContentTotalHeight: number = 0;
+  // Properites for virutal scrolling
+  public totalContentHeight: number = 0;
 
-  public scrollLeft: number = 0;
+  public offsetY: number = 0;
 
-  public scrollTop: number = 0;
-
-  public virtualData: any[] = [];
+  public offsetX: number = 0;
 
   public startIndex: number = 0;
 
+  public itemsTolerance = 0;
+
   public visibleItemsCount: number = 0;
+
+  public bufferedItemsCount: number = 0;
+
+  public bufferedItems: any[] = [];
 
   constructor(private renderer: Renderer2) { 
     
@@ -52,7 +59,14 @@ export class LkGridComponent implements OnInit {
 
   ngOnInit(): void {
     this.hostHeight = this.height;
-    this.virtualScroll();
+
+    //let viewportHeight = this.listViewport.nativeElement.getBoundingClientRect().height;
+    let viewportHeight = this.height - 36;
+    this.visibleItemsCount = Math.ceil(viewportHeight/ this.itemHeight);
+
+    this.itemsTolerance = this.visibleItemsCount;
+
+    this.bufferedItems = this.getDataSubset(0, this.visibleItemsCount * 3);
   }
 
   ngAfterViewInit(): void {
@@ -67,37 +81,32 @@ export class LkGridComponent implements OnInit {
   }
 
   public onListTableScroll($event: any): void {
-    this.scrollLeft = this.listContent.nativeElement.scrollLeft
-    this.scrollTop = this.listContent.nativeElement.scrollTop;
+    // Get relative position of list table element to its parent
+    // Relative position = listTableRect.left - listViewport.left
+    // This is equal to minus value of listViewporttEl.scrollLeft
+    this.offsetX = -$event.target.scrollLeft;
 
-    this.virtualScroll();
+    this.runVirtualScroller($event);
   }
 
   public getColumnHeadersTransformValue(): string
   {
-    // Get relative position of list table element to its parent
-    // Relative position = listTableRect.left - listContent.left
-    // This is equal to minus value of listContentEl.scrollLeft
-    let relativePos = -this.scrollLeft;
-
-    return `translateX(${relativePos}px)`;
+    return `translateX(${this.offsetX}px)`;
   }
 
   public getListTableTransformValue(): string
   {
-    let offsetY = this.startIndex * this.itemHeight;
-
-    return `translateY(${offsetY}px)`;
+    return `translateY(${this.offsetY}px)`;
   }
 
   private shiftColumnHeadersByVerticalScrollbar(): void
   {
     // List table wrapper must be parent of list table to get width of scrollbar
     // when the list table is larger than list content
-    let listContentEl = this.listContent.nativeElement;
+    let listViewportEl = this.listViewport.nativeElement;
     let listTableWrapperEl = this.listTableWrapper.nativeElement;;
 
-    let diff =  listContentEl.getBoundingClientRect().width - 
+    let diff =  listViewportEl.getBoundingClientRect().width - 
     listTableWrapperEl.getBoundingClientRect().width;
 
     let scrollbarWidth = Math.round(diff);
@@ -143,17 +152,18 @@ export class LkGridComponent implements OnInit {
     }
   }
   
-  private virtualScroll(): void
+  private runVirtualScroller($event: any): void
   {
-    this.listContentTotalHeight = this.itemHeight * this.data.length;
+    this.totalContentHeight = this.itemHeight * this.data.length;
 
-    this.startIndex = Math.floor(this.scrollTop / this.itemHeight) - this.itemTolerance;
+    this.startIndex = Math.floor($event.target.scrollTop / this.itemHeight) - this.itemsTolerance;
     this.startIndex = Math.max(0, this.startIndex);
 
-    this.visibleItemsCount = Math.ceil(this.height / this.itemHeight) + 2 * this.itemTolerance;
-    this.visibleItemsCount = Math.min(this.data.length - this.startIndex, this.visibleItemsCount);
+    this.bufferedItemsCount = this.visibleItemsCount + 2 * this.itemsTolerance;
+    this.bufferedItemsCount = Math.min(this.data.length - this.startIndex, this.bufferedItemsCount);
 
-    this.virtualData = this.getDataSubset(this.startIndex, this.visibleItemsCount);
+    this.offsetY = this.startIndex * this.itemHeight;
+    this.bufferedItems = this.getDataSubset(this.startIndex, this.bufferedItemsCount);
   }
 
   public getDataSubset(offset: number, limit: number): any[]
