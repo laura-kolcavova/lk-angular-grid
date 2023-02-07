@@ -39,6 +39,8 @@ export class LkGridComponent implements OnInit {
   // Properites for virutal scrolling
   public totalContentHeight: number = 0;
 
+  public viewportHeight: number = 0;
+
   public offsetY: number = 0;
 
   public offsetX: number = 0;
@@ -65,8 +67,8 @@ export class LkGridComponent implements OnInit {
     // Init virutal scroll state
     this.totalContentHeight = this.itemHeight * this.data.length;
 
-    let viewportHeight = this.height - 36;
-    this.visibleItemsCount = Math.ceil(viewportHeight/ this.itemHeight);
+    this.viewportHeight = this.height - 36;
+    this.visibleItemsCount = Math.ceil(this.viewportHeight/ this.itemHeight);
 
     this.itemsTolerance = this.visibleItemsCount;
 
@@ -158,17 +160,26 @@ export class LkGridComponent implements OnInit {
   
   private runVirtualScroller($event: any): void
   {
+    if (!(
+      $event.target.scrollTop === 0 || 
+      $event.target.scrollTop > (this.startIndex + 2 * this.itemsTolerance) * this.itemHeight || 
+      $event.target.scrollTop <= this.startIndex * this.itemHeight))
+    {
+      return;
+    } 
+    
     this.startIndex = Math.floor($event.target.scrollTop / this.itemHeight) - this.itemsTolerance;
+    this.itemsOffset = Math.max(0, this.startIndex);
 
     this.bufferedItemsCount = this.visibleItemsCount + 2 * this.itemsTolerance;
     this.bufferedItemsCount = Math.min(this.startIndex + this.bufferedItemsCount, this.bufferedItemsCount)
     this.bufferedItemsCount = Math.min(this.data.length - this.startIndex, this.bufferedItemsCount);
 
-    this.itemsOffset = Math.max(0, this.startIndex);
-
     this.offsetY = this.itemsOffset * this.itemHeight;
 
     this.bufferedItems = this.getDataSubset(this.itemsOffset, this.bufferedItemsCount);
+
+    console.log(this.itemsOffset, this.bufferedItemsCount);
   }
 
   private getDataSubset(offset: number, limit: number): any[]

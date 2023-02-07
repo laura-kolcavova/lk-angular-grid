@@ -23,5 +23,5 @@ export class AppComponent {
 
   factory = new PersonFactory();
 
-  data: Person[] = this.factory.create(100);
+  data: Person[] = this.factory.create(10000);
 }
