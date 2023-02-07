@@ -43,6 +43,8 @@ export class LkGridComponent implements OnInit {
 
   public offsetX: number = 0;
 
+  public itemsOffset: number = 0;
+
   public startIndex: number = 0;
 
   public itemsTolerance = 0;
@@ -60,13 +62,15 @@ export class LkGridComponent implements OnInit {
   ngOnInit(): void {
     this.hostHeight = this.height;
 
-    //let viewportHeight = this.listViewport.nativeElement.getBoundingClientRect().height;
+    // Init virutal scroll state
+    this.totalContentHeight = this.itemHeight * this.data.length;
+
     let viewportHeight = this.height - 36;
     this.visibleItemsCount = Math.ceil(viewportHeight/ this.itemHeight);
 
     this.itemsTolerance = this.visibleItemsCount;
 
-    this.bufferedItems = this.getDataSubset(0, this.visibleItemsCount * 3);
+    this.runVirtualScroller({target: { scrollTop: 0}});
   }
 
   ngAfterViewInit(): void {
@@ -154,24 +158,25 @@ export class LkGridComponent implements OnInit {
   
   private runVirtualScroller($event: any): void
   {
-    this.totalContentHeight = this.itemHeight * this.data.length;
-
     this.startIndex = Math.floor($event.target.scrollTop / this.itemHeight) - this.itemsTolerance;
-    this.startIndex = Math.max(0, this.startIndex);
 
     this.bufferedItemsCount = this.visibleItemsCount + 2 * this.itemsTolerance;
+    this.bufferedItemsCount = Math.min(this.startIndex + this.bufferedItemsCount, this.bufferedItemsCount)
     this.bufferedItemsCount = Math.min(this.data.length - this.startIndex, this.bufferedItemsCount);
 
-    this.offsetY = this.startIndex * this.itemHeight;
-    this.bufferedItems = this.getDataSubset(this.startIndex, this.bufferedItemsCount);
+    this.itemsOffset = Math.max(0, this.startIndex);
+
+    this.offsetY = this.itemsOffset * this.itemHeight;
+
+    this.bufferedItems = this.getDataSubset(this.itemsOffset, this.bufferedItemsCount);
   }
 
-  public getDataSubset(offset: number, limit: number): any[]
+  private getDataSubset(offset: number, limit: number): any[]
   {
     // let items: any[] = [];
 
     // let start: number = Math.max(0, offset);
-    // let end: number = Math.min(offset + limit - 1, this.data.length);
+    // let end: number = Math.min(offset + limit - 1, this.data.length - 1);
 
     // if (start <= end)
     // {
