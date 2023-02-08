@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ColumnDefinition } from 'dist/lk-grid/lib/ColumnDefinition';
+import { SortDefinition } from 'dist/lk-grid/lib/SortDefinition';
 import { Person } from './Person';
 import { PersonFactory } from './PersonFactory';
 
@@ -24,4 +25,9 @@ export class AppComponent {
   factory = new PersonFactory();
 
   data: Person[] = this.factory.create(10000);
+
+  onSort(sort: SortDefinition)
+  {
+    console.log(sort);
+  }
 }

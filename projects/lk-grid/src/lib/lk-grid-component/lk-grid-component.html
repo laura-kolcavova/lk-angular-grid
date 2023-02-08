@@ -13,9 +13,18 @@
                 </colgroup>
                 <thead>
                     <tr>
-                        <th class="lk-datagrid-column-header" *ngFor="let columnDef of columnDefs" >
-                            <span class="lk-datagrid-column-title">
-                                {{ columnDef.title }}
+                        <th *ngFor="let columnDef of columnDefs"
+                            [ngClass]="{'lk-datagrid-column-sorted': sort && sort.field === columnDef.field}">
+                            <span class="lk-datagrid-cell-content">
+                                <span class="lk-datagrid-link" (click)="onColumnHeaderClick($event, columnDef)">
+                                    <span class="lk-datagrid-column-title">
+                                        {{ columnDef.title }}
+                                    </span>
+                                    <span class="lk-datagrid-sort-icon">
+
+                                    </span>
+                                </span>
+                                
                             </span>
                         </th>
                     </tr>
@@ -37,13 +46,11 @@
                     <tbody>
                         <tr *ngFor="let item of bufferedItems; index as rowIndex"
                             [style.height.px]="itemHeight"
-                            [ngClass]="{'lk-datagrid-table-row-odd': (itemsOffset + rowIndex) % 2 !== 0}"
+                            [ngClass]="{'lk-datagrid-list-row-odd': (itemsOffset + rowIndex) % 2 !== 0}"
                             attr.data-lk-datagrid-row-index="{{rowIndex + 1}}"
                             attr.data-lk-datagrid-item-index="{{itemsOffset + rowIndex + 1}}">
-                            <td class="lk-datagrid-cell" *ngFor="let columnDef of columnDefs" >
-                                <span class="lk-datagrid-value">
-                                    {{ item[columnDef.field] }}
-                                </span>
+                            <td *ngFor="let columnDef of columnDefs" >
+                                {{ item[columnDef.field] }}
                             </td>
                         </tr>
                     </tbody>

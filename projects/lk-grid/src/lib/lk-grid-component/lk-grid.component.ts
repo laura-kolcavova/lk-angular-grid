@@ -1,5 +1,6 @@
-import { Component, Input, OnInit, ElementRef, HostBinding, ViewChild, Renderer2 } from '@angular/core';
+import { Component, Input, OnInit, ElementRef, HostBinding, ViewChild, Renderer2, Output, EventEmitter } from '@angular/core';
 import { ColumnDefinition } from '../ColumnDefinition';
+import { SortDefinition } from '../SortDefinition';
 
 @Component({
   selector: 'lk-grid',
@@ -8,15 +9,18 @@ import { ColumnDefinition } from '../ColumnDefinition';
 })
 export class LkGridComponent implements OnInit {
 
-  // Input properties for grid view
+  // Input bindings for grid view
   @Input() columnDefs!: ColumnDefinition[];
 
   @Input() data!: any[];
 
-  // Input properties for virutal scrolling
+  // Input bindings for virutal scrolling
   @Input() height!: number;
 
   @Input() itemHeight!: number;
+
+  // Output bindings for grid view
+  @Output() sortChange: EventEmitter<SortDefinition> = new EventEmitter<SortDefinition>();
 
   // DOM bindings
   @HostBinding("style.height.px") hostHeight!: number;
@@ -35,6 +39,8 @@ export class LkGridComponent implements OnInit {
 
   // Properties for grid view
   public columnSizes: number[] = [];
+
+  public sort: SortDefinition | null = null;
 
   // Properites for virutal scrolling
   public totalContentHeight: number = 0;
@@ -87,12 +93,30 @@ export class LkGridComponent implements OnInit {
   }
 
   public onListTableScroll($event: any): void {
-    // Get relative position of list table element to its parent
-    // Relative position = listTableRect.left - listViewport.left
-    // This is equal to minus value of listViewporttEl.scrollLeft
-    this.offsetX = -$event.target.scrollLeft;
-
+    this.runHorizontalScroller($event);
     this.runVirtualScroller($event);
+  }
+
+  public onColumnHeaderClick($event: any, columnDef: ColumnDefinition): void {
+    let newSort: SortDefinition = {
+      field: columnDef.field,
+      dir: null,
+    };
+
+    if (this.sort !== null && this.sort.field === newSort.field) {
+      switch(this.sort.dir) {
+        case null: newSort.dir = 'asc'; break;
+        case 'asc': newSort.dir = 'desc'; break;
+        case 'desc': newSort.dir = null; break;
+      }
+    }
+
+    this.sort = {
+      field: newSort.field,
+      dir: newSort.dir,
+    };
+
+    this.sortChange.emit(newSort);
   }
 
   public getColumnHeadersTransformValue(): string
@@ -157,6 +181,14 @@ export class LkGridComponent implements OnInit {
       this.columnSizes[i] = size;
     }
   }
+
+  private runHorizontalScroller($event: any): void
+  {
+    // Get relative position of list table element to its parent
+    // Relative position = listTableRect.left - listViewport.left
+    // This is equal to minus value of listViewporttEl.scrollLeft
+    this.offsetX = -$event.target.scrollLeft;
+  }
   
   private runVirtualScroller($event: any): void
   {
@@ -178,8 +210,6 @@ export class LkGridComponent implements OnInit {
     this.offsetY = this.itemsOffset * this.itemHeight;
 
     this.bufferedItems = this.getDataSubset(this.itemsOffset, this.bufferedItemsCount);
-
-    console.log(this.itemsOffset, this.bufferedItemsCount);
   }
 
   private getDataSubset(offset: number, limit: number): any[]

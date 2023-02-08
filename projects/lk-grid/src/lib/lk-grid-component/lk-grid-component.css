@@ -2,6 +2,7 @@
     --border-color:  rgb(224, 224, 224);
 
     --column-headers-bg-color: #fafafa;
+    --column-headers-bg-color-second: #ededed;
 
     --list-bg-color: #ffffff;
     --list-bg-color-second: #fafafa;
@@ -38,6 +39,7 @@
     box-sizing: border-box;
     overflow: hidden;
     white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 :host(.lk-datagrid) td,
@@ -48,6 +50,10 @@
 :host(.lk-datagrid) td:first-child,
 :host(.lk-datagrid) th:first-child {
     border-left-width: 0;
+}
+
+.lk-datagrid-column-sorted {
+    background-color: var(--column-headers-bg-color-second);
 }
 
 .lk-datagrid-table-fixed {
@@ -90,10 +96,37 @@
     overflow-x: auto;
 }
 
-.lk-datagrid-table-row-odd {
+.lk-datagrid-list-row-odd {
     background-color: var(--list-bg-color-second)
 }
 
 .lk-datagrid-list tr:hover {
     background-color: var(--list-bg-color-hover);
 }
+
+.lk-datagrid-link, .lk-datagrid-link:hover {
+    color: inherit;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.lk-datagrid-cell-content {
+    display: flex;
+    overflow: hidden;
+    margin: -8px -12px;
+}
+
+.lk-datagrid-cell-content .lk-datagrid-link {
+    padding: 8px 12px;
+    flex: 1 1 auto;
+    display: flex;
+    overflow: hidden;
+}
+
+.lk-datagrid-column-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+

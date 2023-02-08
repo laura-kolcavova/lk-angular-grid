@@ -29,16 +29,16 @@ export class PersonFactory
   ];
   
   private cities = [
-      "Seattle",
-      "Tacoma",
-      "Kirkland",
-      "Redmond",
       "London",
-      "Philadelphia",
-      "New York",
-      "Seattle",
-      "London",
-      "Boston",
+      "Washington",
+      "Paris",
+      "Berlin",
+      "Prague",
+      "Barcelona",
+      "Tokyo",
+      "Peking",
+      "Rio de Janeiro",
+      "Oslo",
   ];
   
   private jobs = [
