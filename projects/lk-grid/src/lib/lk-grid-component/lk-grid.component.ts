@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ElementRef, HostBinding, ViewChild, Renderer2, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, ElementRef, HostBinding, ViewChild, Renderer2, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { ColumnDefinition } from '../ColumnDefinition';
 import { SortDefinition } from '../SortDefinition';
 
@@ -20,27 +20,27 @@ export class LkGridComponent implements OnInit {
   @Input() itemHeight!: number;
 
   // Output bindings for grid view
-  @Output() sortChange: EventEmitter<SortDefinition> = new EventEmitter<SortDefinition>();
+  @Output() sortChange: EventEmitter<SortDefinition[]> = new EventEmitter<SortDefinition[]>();
 
   // DOM bindings
   @HostBinding("style.height.px") hostHeight!: number;
 
-  @ViewChild('columnHeaders') columnHeaders!: ElementRef<HTMLElement>;
+  @ViewChild('columnHeaders') elColumnHeaders!: ElementRef<HTMLElement>;
 
-  @ViewChild('columnHeadersTable') columnHeadersTable!: ElementRef<HTMLElement>;
+  @ViewChild('columnHeadersTable') elColumnHeadersTable!: ElementRef<HTMLElement>;
  
-  @ViewChild('listViewport') listViewport! : ElementRef<HTMLElement>;
+  @ViewChild('listViewport') elListViewport! : ElementRef<HTMLElement>;
 
   // List table wrapper must be parent of list table to get width of scrollbar
   // when the list table is larger than list content
-  @ViewChild('listTableWrapper') listTableWrapper!: ElementRef<HTMLElement>;
+  @ViewChild('listTableWrapper') elListTableWrapper!: ElementRef<HTMLElement>;
 
-  @ViewChild('listTable') listTable! : ElementRef<HTMLElement>;
+  @ViewChild('listTable') elListTable! : ElementRef<HTMLElement>;
 
   // Properties for grid view
   public columnSizes: number[] = [];
 
-  public sort: SortDefinition | null = null;
+  public sort: SortDefinition[] = [];
 
   // Properites for virutal scrolling
   public totalContentHeight: number = 0;
@@ -63,7 +63,7 @@ export class LkGridComponent implements OnInit {
 
   public bufferedItems: any[] = [];
 
-  constructor(private renderer: Renderer2) { 
+  constructor(private renderer: Renderer2, private cdRef: ChangeDetectorRef) { 
     
   }
 
@@ -81,15 +81,17 @@ export class LkGridComponent implements OnInit {
     this.runVirtualScroller({target: { scrollTop: 0}});
   }
 
-  ngAfterViewInit(): void {
+  ngAfterViewChecked(): void {
     this.shiftColumnHeadersByVerticalScrollbar();
-    this.computeColumnSizes();
+    this.columnSizes = this.computeColumnSizes();
 
     // Before the column sizes are computed the column headers table and list table must not have set css property 'table-layout' to 'fixed'.
     // After column sizes are computed they are used to set width of table columns
     // but the tables must have set css property 'table-layout' to 'fixed', otherwise the width of the columns will not work properly.
-    this.renderer.addClass(this.columnHeadersTable.nativeElement, 'lk-datagrid-table-fixed');
-    this.renderer.addClass(this.listTable.nativeElement, 'lk-datagrid-table-fixed');
+    this.renderer.addClass(this.elColumnHeadersTable.nativeElement, 'lk-datagrid-table-fixed');
+    this.renderer.addClass(this.elListTable.nativeElement, 'lk-datagrid-table-fixed');
+
+    this.cdRef.detectChanges();
   }
 
   public onListTableScroll($event: any): void {
@@ -98,25 +100,86 @@ export class LkGridComponent implements OnInit {
   }
 
   public onColumnHeaderClick($event: any, columnDef: ColumnDefinition): void {
-    let newSort: SortDefinition = {
+    let newSort: SortDefinition[] = [];
+
+    let newSortDef: SortDefinition = {
       field: columnDef.field,
-      dir: null,
+      dir: 'asc',
     };
 
-    if (this.sort !== null && this.sort.field === newSort.field) {
-      switch(this.sort.dir) {
-        case null: newSort.dir = 'asc'; break;
-        case 'asc': newSort.dir = 'desc'; break;
-        case 'desc': newSort.dir = null; break;
+    let updatedOrDeleted: boolean = false;
+
+    let i;
+    for (i = 0; i < this.sort.length; i++)
+    {
+      let sortDef = this.sort[i];
+
+      if (sortDef.field === newSortDef.field)
+      {
+        // If sort definition with same field name already exists in the sort array update its sort direction
+        // By adding new sort definition into the new sort array
+        // Or delete sort definition by not adding the new sort definition into the array
+        switch(sortDef.dir) 
+        {
+          case 'asc': newSortDef.dir = 'desc'; break;
+          case 'desc': newSortDef.dir = undefined; break;
+        }
+
+        if (newSortDef.dir !== undefined)
+        {
+          newSort.push(newSortDef);
+        }
+       
+        updatedOrDeleted = true;;
+      }
+      else
+      {
+        // Add existing sort definition into the new sort array
+        newSort.push(sortDef);
       }
     }
 
-    this.sort = {
-      field: newSort.field,
-      dir: newSort.dir,
-    };
+    if (updatedOrDeleted === false) {
+      newSort.push(newSortDef);
+    }
 
-    this.sortChange.emit(newSort);
+    this.sort = newSort;
+
+    this.sortChange.emit(newSort.map(s => Object.assign({}, s)));
+  }
+
+  public getSortDefOfColumn(columnDef: ColumnDefinition): SortDefinition | null
+  {
+    let i;
+    for (i = 0; i < this.sort.length; i++)
+    {
+      let sortDef = this.sort[i];
+
+      if (sortDef.field === columnDef.field)
+      {
+        return sortDef
+      }
+    }
+
+    return null;
+  }
+
+  public getColumnHeaders(): {
+    columnDef: ColumnDefinition,
+    sortDef: SortDefinition
+  }[]
+  {
+    let self = this;
+
+    return this.columnDefs.map(c => {
+      return {
+        columnDef: c,
+        sortDef: self.getSortDefOfColumn(c) || {
+          field: c.field,
+          dir: undefined
+        },
+      };
+    });
   }
 
   public getColumnHeadersTransformValue(): string
@@ -133,24 +196,25 @@ export class LkGridComponent implements OnInit {
   {
     // List table wrapper must be parent of list table to get width of scrollbar
     // when the list table is larger than list content
-    let listViewportEl = this.listViewport.nativeElement;
-    let listTableWrapperEl = this.listTableWrapper.nativeElement;;
+    let listViewportEl = this.elListViewport.nativeElement;
+    let listTableWrapperEl = this.elListTableWrapper.nativeElement;;
 
     let diff =  listViewportEl.getBoundingClientRect().width - 
     listTableWrapperEl.getBoundingClientRect().width;
 
     let scrollbarWidth = Math.round(diff);
 
-    this.renderer.setStyle(this.columnHeaders.nativeElement, 'padding-right', `${scrollbarWidth}px`);
+    this.renderer.setStyle(this.elColumnHeaders.nativeElement, 'padding-right', `${scrollbarWidth}px`);
   }
 
-  private computeColumnSizes(): void
+  private computeColumnSizes(): number[]
   {
-    let colHeadersRow = this.columnHeadersTable.nativeElement.querySelector('tr');
-    let dataRow = this.listTable.nativeElement.querySelector('tr');
+    let columnSizes: number[] = [];
+    let colHeadersRow = this.elColumnHeadersTable.nativeElement.querySelector('tr');
+    let dataRow = this.elListTable.nativeElement.querySelector('tr');
 
     if (colHeadersRow === null) {
-      return;
+      return [];
     }
 
     let i;
@@ -178,8 +242,10 @@ export class LkGridComponent implements OnInit {
         }
       }
 
-      this.columnSizes[i] = size;
+      columnSizes[i] = size;
     }
+
+    return columnSizes;
   }
 
   private runHorizontalScroller($event: any): void

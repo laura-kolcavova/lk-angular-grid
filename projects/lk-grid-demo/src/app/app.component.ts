@@ -26,7 +26,7 @@ export class AppComponent {
 
   data: Person[] = this.factory.create(10000);
 
-  onSort(sort: SortDefinition)
+  onSort(sort: SortDefinition[])
   {
     console.log(sort);
   }

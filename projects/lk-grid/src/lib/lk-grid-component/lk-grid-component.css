@@ -7,6 +7,8 @@
     --list-bg-color: #ffffff;
     --list-bg-color-second: #fafafa;
     --list-bg-color-hover: #ededed;
+
+    --icon-color: #1274AC;
 }
 
 :host(.lk-datagrid) {
@@ -104,22 +106,23 @@
     background-color: var(--list-bg-color-hover);
 }
 
-.lk-datagrid-link, .lk-datagrid-link:hover {
-    color: inherit;
-    cursor: pointer;
-    text-decoration: none;
-}
-
 .lk-datagrid-cell-content {
     display: flex;
     overflow: hidden;
     margin: -8px -12px;
 }
 
+.lk-datagrid-link, .lk-datagrid-link:hover {
+    color: inherit;
+    cursor: pointer;
+    text-decoration: none;
+}
+
 .lk-datagrid-cell-content .lk-datagrid-link {
     padding: 8px 12px;
     flex: 1 1 auto;
     display: flex;
+    align-items: center;
     overflow: hidden;
 }
 
@@ -128,5 +131,33 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     min-width: 0;
+    flex-shrink: 1;
 }
 
+.lk-datagrid-sort-icon {
+    color: var(--icon-color);
+    margin-left: 7px;
+    flex-shrink: 0;
+    display: inline-flex;
+}
+
+.lk-icon {
+    display: flex;
+    align-items: center;
+    justify-items: center;
+    width: 1em;
+    height: 1em;
+    font-size: 16px;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: normal;
+    line-height: 1;
+}
+
+/* .lk-icon-sort-asc::before {
+    content: '\2191';
+}
+
+.lk-icon-sort-desc::before {
+    content: '\2193';
+} */
