@@ -1,4 +1,6 @@
-import { Component, Input, OnInit, ElementRef, HostBinding, ViewChild, Renderer2, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
+import { 
+  Component, Input, OnInit, ElementRef, HostBinding, ViewChild, 
+  Renderer2, Output, EventEmitter, ChangeDetectorRef, SimpleChanges } from '@angular/core';
 import { ColumnDefinition } from '../ColumnDefinition';
 import { SortDefinition } from '../SortDefinition';
 
@@ -51,6 +53,10 @@ export class LkGridComponent implements OnInit {
 
   public offsetX: number = 0;
 
+  public scrollTop: number = 0;
+
+  public scrollLeft: number = 0;
+
   public itemsOffset: number = 0;
 
   public startIndex: number = 0;
@@ -81,6 +87,19 @@ export class LkGridComponent implements OnInit {
     this.runVirtualScroller({target: { scrollTop: 0}});
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    console.log(changes);
+    let dataCurrent = changes['data'].currentValue;
+    let dataPrevious = changes['data'].previousValue;
+
+    // If length of data items are same (for example data were been sorted) 
+    // load new data subset into buffer.
+    if (dataCurrent && dataPrevious && dataCurrent.length === dataPrevious.length)
+    {
+      this.bufferedItems = this.getDataSubset(this.itemsOffset, this.bufferedItemsCount);
+    }
+  }
+
   ngAfterViewChecked(): void {
     this.shiftColumnHeadersByVerticalScrollbar();
     this.columnSizes = this.computeColumnSizes();
@@ -97,6 +116,9 @@ export class LkGridComponent implements OnInit {
   public onListTableScroll($event: any): void {
     this.runHorizontalScroller($event);
     this.runVirtualScroller($event);
+
+    this.scrollTop = $event.target.scrollTop;
+    this.scrollLeft = $event.target.scrollLeft;
   }
 
   public onColumnHeaderClick($event: any, columnDef: ColumnDefinition): void {
@@ -258,6 +280,8 @@ export class LkGridComponent implements OnInit {
   
   private runVirtualScroller($event: any): void
   {
+    // Data will be rerendered when only when scroller reachs end or start of data subset (in buffer)
+    // This condition prevents rerendering of data subset (in buffer) during each scroll event
     if (!(
       $event.target.scrollTop === 0 || 
       $event.target.scrollTop > (this.startIndex + 2 * this.itemsTolerance) * this.itemHeight || 
