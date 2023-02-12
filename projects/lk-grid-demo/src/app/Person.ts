@@ -1,9 +1,4 @@
-
-export interface Entity {
-    [key: string]: any;
-}
-
-export interface Person extends Entity
+export interface Person
 {
     id: number;
     firstName: string;

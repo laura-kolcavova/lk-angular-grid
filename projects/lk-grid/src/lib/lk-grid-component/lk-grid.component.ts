@@ -2,7 +2,10 @@ import {
   Component, Input, OnInit, ElementRef, HostBinding, ViewChild, 
   Renderer2, Output, EventEmitter, ChangeDetectorRef, SimpleChanges } from '@angular/core';
 import { ColumnDefinition } from '../ColumnDefinition';
+import { SortChangeEvent, SegmentChangeEvent } from '../Events';
+import { segment } from '../InMemoryQuery';
 import { SortDefinition } from '../SortDefinition';
+
 
 @Component({
   selector: 'lk-grid',
@@ -21,8 +24,12 @@ export class LkGridComponent implements OnInit {
 
   @Input() itemHeight!: number;
 
+  @Input() totalItems!: number;
+
   // Output bindings for grid view
-  @Output() sortChange: EventEmitter<SortDefinition[]> = new EventEmitter<SortDefinition[]>();
+  @Output() sortChange: EventEmitter<SortChangeEvent> = new EventEmitter<SortChangeEvent>();
+
+  @Output() segmentChange: EventEmitter<SegmentChangeEvent> = new EventEmitter<SegmentChangeEvent>();
 
   // DOM bindings
   @HostBinding("style.height.px") hostHeight!: number;
@@ -40,55 +47,55 @@ export class LkGridComponent implements OnInit {
   @ViewChild('listTable') elListTable! : ElementRef<HTMLElement>;
 
   // Properties for grid view
-  public columnSizes: number[] = [];
+  public columnSizes: (number | null)[] = [];
 
   public sort: SortDefinition[] = [];
 
   // Properites for virutal scrolling
-  public totalContentHeight: number = 0;
+  public scrollTop: number = 0; // Scroll top value of list table element - obtained during onScroll event.
 
-  public viewportHeight: number = 0;
+  public scrollLeft: number = 0; // Scroll left value of list table element - obtainted during onScroll event.
 
-  public offsetY: number = 0;
+  public totalContentHeight: number = 0; // Total scrolling height (of all possible items) - important for scrolling bar
 
-  public offsetX: number = 0;
+  public itemsTolerance = 0; // Count of items above and under viewport window - important for smooth scrolling (cached renderd items)
 
-  public scrollTop: number = 0;
+  public viewportHeight: number = 0; // Height of visible viewport window.
 
-  public scrollLeft: number = 0;
+  public visibleItemsCount: number = 0; // Count of items visible in viewport window.
 
-  public itemsOffset: number = 0;
+  public startIndex: number = 0; // Index of possible first rendered item - it can have negative value.
 
-  public startIndex: number = 0;
+  public itemsOffset: number = 0; // Index of first rendered item - equal to count of items skiped in datasource
 
-  public itemsTolerance = 0;
+  public offsetY: number = 0; // Relative top position of buffer window.
 
-  public visibleItemsCount: number = 0;
+  public offsetX: number = 0; // Relaitve left position of list table element.
 
-  public bufferedItemsCount: number = 0;
+  public bufferedItemsHeight: number = 0; // Height of buffer window.
+ 
+  public bufferedItemsCount: number = 0; // Count of items to be rendered - computed with itemsTolerance and visibleItemsCount
 
-  public bufferedItems: any[] = [];
+  public bufferedItems: any[] = []; // Loaded items to be rendered.
 
   constructor(private renderer: Renderer2, private cdRef: ChangeDetectorRef) { 
-    
   }
 
   ngOnInit(): void {
     this.hostHeight = this.height;
 
     // Init virutal scroll state
-    this.totalContentHeight = this.itemHeight * this.data.length;
+    this.totalContentHeight = this.itemHeight * this.totalItems;
 
-    this.viewportHeight = this.height - 36;
+    this.viewportHeight = this.height - 36; //Todo - this is not good solution.
     this.visibleItemsCount = Math.ceil(this.viewportHeight/ this.itemHeight);
 
     this.itemsTolerance = this.visibleItemsCount;
 
-    this.runVirtualScroller({target: { scrollTop: 0}});
+    this.runVirtualScroller({target: { scrollTop: 0}}, true);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log(changes);
     let dataCurrent = changes['data'].currentValue;
     let dataPrevious = changes['data'].previousValue;
 
@@ -96,7 +103,10 @@ export class LkGridComponent implements OnInit {
     // load new data subset into buffer.
     if (dataCurrent && dataPrevious && dataCurrent.length === dataPrevious.length)
     {
-      this.bufferedItems = this.getDataSubset(this.itemsOffset, this.bufferedItemsCount);
+      this.bufferedItems = segment(this.data, this.itemsOffset, this.bufferedItemsCount);
+    }
+    else {
+      // Todo
     }
   }
 
@@ -139,8 +149,8 @@ export class LkGridComponent implements OnInit {
       if (sortDef.field === newSortDef.field)
       {
         // If sort definition with same field name already exists in the sort array update its sort direction
-        // By adding new sort definition into the new sort array
-        // Or delete sort definition by not adding the new sort definition into the array
+        // by adding new sort definition into the new sort array
+        // or delete sort definition by not adding the new sort definition into the array.
         switch(sortDef.dir) 
         {
           case 'asc': newSortDef.dir = 'desc'; break;
@@ -156,7 +166,7 @@ export class LkGridComponent implements OnInit {
       }
       else
       {
-        // Add existing sort definition into the new sort array
+        // Add existing sort definition into the new sort array.
         newSort.push(sortDef);
       }
     }
@@ -167,7 +177,9 @@ export class LkGridComponent implements OnInit {
 
     this.sort = newSort;
 
-    this.sortChange.emit(newSort.map(s => Object.assign({}, s)));
+    this.sortChange.emit({
+      sort: newSort.map(s => Object.assign({}, s)),
+    });
   }
 
   public getSortDefOfColumn(columnDef: ColumnDefinition): SortDefinition | null
@@ -217,7 +229,7 @@ export class LkGridComponent implements OnInit {
   private shiftColumnHeadersByVerticalScrollbar(): void
   {
     // List table wrapper must be parent of list table to get width of scrollbar
-    // when the list table is larger than list content
+    // when the list table is larger than list content.
     let listViewportEl = this.elListViewport.nativeElement;
     let listTableWrapperEl = this.elListTableWrapper.nativeElement;;
 
@@ -229,42 +241,45 @@ export class LkGridComponent implements OnInit {
     this.renderer.setStyle(this.elColumnHeaders.nativeElement, 'padding-right', `${scrollbarWidth}px`);
   }
 
-  private computeColumnSizes(): number[]
+  private computeColumnSizes(): (number | null)[]
   {
-    let columnSizes: number[] = [];
-    let colHeadersRow = this.elColumnHeadersTable.nativeElement.querySelector('tr');
-    let dataRow = this.elListTable.nativeElement.querySelector('tr');
+    let columnSizes: (number | null)[] = [];
+    let colHeadersRow: HTMLTableRowElement | null = null;
+    let dataRow: HTMLTableRowElement | null = null;
 
-    if (colHeadersRow === null) {
-      return [];
-    }
-
-    let i;
-    for (i = 0; i < colHeadersRow.childNodes.length; i++)
+    for (let i = 0; i < this.columnDefs.length; i++)
     {
-      let colHeader = colHeadersRow.childNodes[i] as HTMLElement;
+      let columnDef = this.columnDefs[i];
 
-      if (colHeader.tagName !== 'TH') {
+      if (columnDef.width !== undefined)
+      {
+        columnSizes[i] = columnDef.width;
         continue;
       }
 
-      let size = colHeader.getBoundingClientRect().width;
+      // If width of columnDef is not defined the width size will be set to rendered width of column header or data cell (the wider one).
+      // For this solution at this time the table element must not have css property 'table-layout' set to 'fixed'.
+      // The 'fixed' value must be set to table after the computation is complete.
+      colHeadersRow = colHeadersRow ??= this.elColumnHeadersTable.nativeElement.querySelector('tr');
+      dataRow = dataRow ??= this.elListTable.nativeElement.querySelector('tr')
 
-      if (dataRow !== null) {
-        let dataCol = dataRow.childNodes[i] as HTMLElement;
-
-        if (dataCol.tagName !== 'TD') {
-          continue;
-        }
-
-        let dataColSize = dataCol.getBoundingClientRect().width;
-
-        if (dataColSize > size) {
-          size = dataColSize;
-        }
+      if (colHeadersRow == null) {
+        columnSizes[i] = null;
+        continue;
       }
 
-      columnSizes[i] = size;
+      let colHeader = colHeadersRow.querySelectorAll('th')[i];
+      let colHeaderSize: number = colHeader.getBoundingClientRect().width;
+
+      if (dataRow == null) {
+        columnSizes[i] = colHeaderSize;
+        continue;
+      }
+
+      let dataCell = dataRow.querySelectorAll('td')[i];
+      let dataCellSize: number = dataCell.getBoundingClientRect().width;
+
+      columnSizes[i] = colHeaderSize >= dataCellSize ? colHeaderSize : dataCellSize;
     }
 
     return columnSizes;
@@ -272,53 +287,61 @@ export class LkGridComponent implements OnInit {
 
   private runHorizontalScroller($event: any): void
   {
-    // Get relative position of list table element to its parent
-    // Relative position = listTableRect.left - listViewport.left
-    // This is equal to minus value of listViewporttEl.scrollLeft
+    // Get relative position of list table element to its parent.
+    // Relative position = listTableRect.left - listViewport.left.
+    // This is equal to minus value of listViewporttEl.scrollLeft.
     this.offsetX = -$event.target.scrollLeft;
   }
   
-  private runVirtualScroller($event: any): void
+  private runVirtualScroller($event: any, isInit: boolean = false): void
   {
-    // Data will be rerendered when only when scroller reachs end or start of data subset (in buffer)
-    // This condition prevents rerendering of data subset (in buffer) during each scroll event
+    // Data will be rerendered when only when scroller reachs end or start of data subset (in buffer).
+    // This condition prevents rerendering of data subset (in buffer) during each scroll event.
     if (!(
-      $event.target.scrollTop === 0 || 
-      $event.target.scrollTop > (this.startIndex + 2 * this.itemsTolerance) * this.itemHeight || 
-      $event.target.scrollTop <= this.startIndex * this.itemHeight))
+      isInit === true || 
+      $event.target.scrollTop + this.viewportHeight >= this.offsetY + this.bufferedItemsHeight || 
+      $event.target.scrollTop <= this.offsetY))
     {
+          // $event.target.scrollTop > (this.startIndex + 2 * this.itemsTolerance) * this.itemHeight || -- 
+          // $event.target.scrollTop >= (this.itemsOffset + this.bufferedItemsCount - this.visibleItemsCount) * this.itemHeight
+          // $event.target.scrollTop <= this.startIndex * this.itemHeight))
       return;
     } 
     
     this.startIndex = Math.floor($event.target.scrollTop / this.itemHeight) - this.itemsTolerance;
+
+    // If rerendering of data subset (in buffer) during each scroll event is prevented,
+    // the start index must be always added or substracted by value of items tolerance
+
+    // TODO: this is not working
+
+    // if (this.startIndex < this.itemsOffset)
+    // {
+    //   this.startIndex = this.itemsOffset - this.itemsTolerance;
+    // }
+    // else if (this.startIndex > this.itemsOffset)
+    // {
+    //   this.startIndex = this.itemsOffset + this.itemsTolerance;
+    // }
+
     this.itemsOffset = Math.max(0, this.startIndex);
 
     this.bufferedItemsCount = this.visibleItemsCount + 2 * this.itemsTolerance;
     this.bufferedItemsCount = Math.min(this.startIndex + this.bufferedItemsCount, this.bufferedItemsCount)
-    this.bufferedItemsCount = Math.min(this.data.length - this.startIndex, this.bufferedItemsCount);
+    this.bufferedItemsCount = Math.min(this.totalItems - this.startIndex, this.bufferedItemsCount);
 
     this.offsetY = this.itemsOffset * this.itemHeight;
+    this.bufferedItemsHeight = this.bufferedItemsCount * this.itemHeight;
 
-    this.bufferedItems = this.getDataSubset(this.itemsOffset, this.bufferedItemsCount);
-  }
+    console.log(this.startIndex + '\n');
+    if (isInit === false)
+    {
+      this.segmentChange.emit({
+        offset: this.itemsOffset,
+        limit: this.bufferedItemsCount
+      });
+    }
 
-  private getDataSubset(offset: number, limit: number): any[]
-  {
-    // let items: any[] = [];
-
-    // let start: number = Math.max(0, offset);
-    // let end: number = Math.min(offset + limit - 1, this.data.length - 1);
-
-    // if (start <= end)
-    // {
-    //   for (let i = start; i <= end; i++)
-    //   {
-    //     items.push(this.data[i]);
-    //   }
-    // }
-
-    let items: any[] = this.data.slice(offset, offset + limit);
-
-    return items;
+    this.bufferedItems = segment(this.data, this.itemsOffset, this.bufferedItemsCount);
   }
 }

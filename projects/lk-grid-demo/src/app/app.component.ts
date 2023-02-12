@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { ColumnDefinition } from 'dist/lk-grid/lib/ColumnDefinition';
-import { SortDefinition } from 'dist/lk-grid/lib/SortDefinition';
-import { Entity, Person } from './Person';
+import { SegmentChangeEvent, SortChangeEvent } from 'projects/lk-grid/src/lib/Events';
+import { executeQuery, InMemoryQuery, orderBy, select } from 'projects/lk-grid/src/lib/InMemoryQuery';
+import { Person } from './Person';
 import { PersonFactory } from './PersonFactory';
 
 @Component({
@@ -10,64 +11,52 @@ import { PersonFactory } from './PersonFactory';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  private factory = new PersonFactory();
+  private factory: PersonFactory = new PersonFactory();
 
   private persistentData: Person[] = this.factory.create(10000);
 
-  public title = 'lk-grid-demo';
+  private query: InMemoryQuery<Person> = {
+    from: this.persistentData
+  };
+
+  public title: string = 'lk-grid-demo';
+
+  public data: any[] = this.loadData();
 
   public columnDefs: ColumnDefinition[] = [
-    { field: 'id', title: '#'},
-    { field: 'firstName', title: 'First name' },
-    { field: 'lastName', title: 'Last name' },
+    { field: 'id', title: '#', width: 75},
+    { field: 'firstName', title: 'First name', width: 160 },
+    { field: 'lastName', title: 'Last name', width: 160 },
     { field: 'city', title: 'City' },
     { field: 'job', title: 'Job' },
     { field: 'age', title: 'Age'},
     { field: 'hobby', title: 'Hobby'},
   ];
 
-  public data = this.persistentData.slice();
-
-  public onSort(sort: SortDefinition[])
-  {
-    let tmpData = this.persistentData.slice();
-
-    let i;
-    for (i = 0; i < sort.length; i++)
-    {
-      let sortDef = sort[i];
-    
-      tmpData.sort(this.compareObjectsByField(sortDef.field, sortDef.dir));
-    }
-
-    this.data = tmpData;
+  constructor() {
   }
 
-  private compareObjectsByField(fieldName: string, sortingDir: string | undefined):
-  (a: Entity, b: Entity) => number
-  {
-    if (sortingDir === 'asc') {
-      return (a: Entity, b: Entity) => this.compare(a[fieldName], b[fieldName]);
-    }
-
-    if (sortingDir === 'desc')
-    {
-      return (a: Entity, b: Entity) => this.compare(b[fieldName], a[fieldName]);
-    }
-
-    return (a: Entity, b: Entity) => 0;
+  public get totalItems(): number {
+    return this.persistentData.length;
   }
 
-  private compare(a: any, b: any): number
+  public onSort(event: SortChangeEvent)
   {
-    if (a > b) {
-      return 1;
-    }
+    this.query.orderBy = event.sort;
+    this.data = this.loadData();
+  }
 
-    if (a < b) {
-      return -1
-    }
+  public onSegmentChange(event: SegmentChangeEvent)
+  {
+    console.log(event);
+    // this.query.offset = event.offset;
+    // this.query.limit = event.limit;
+    // this.data = this.loadData();
+  }
 
-    return 0;
+  private loadData(): any[]
+  {
+    let result = executeQuery(this.query);
+    return result.data;
   }
 }

@@ -1,10 +1,12 @@
 <div class="container">
     <lk-grid
         class="lk-datagrid"
+        [height]="536"
         [columnDefs]="columnDefs"
         [data]="data"
-        [height]="536"
+        [totalItems]="totalItems"     
         [itemHeight]="50"
-        (sortChange)="onSort($event)">
+        (sortChange)="onSort($event)"
+        (segmentChange)="onSegmentChange($event)">
     </lk-grid>
 </div>

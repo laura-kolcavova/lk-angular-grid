@@ -1,4 +1,4 @@
 export interface SortDefinition {
     field: string,
-    dir?: string,
+    dir?: 'asc' | 'desc',
 }

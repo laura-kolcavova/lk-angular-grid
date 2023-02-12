@@ -18,7 +18,7 @@
                             <span class="lk-datagrid-cell-content">
                                 <span class="lk-datagrid-link" (click)="onColumnHeaderClick($event, c.columnDef)">
                                     <span class="lk-datagrid-column-title">
-                                        {{ c.columnDef.title }}
+                                        {{ c.columnDef.title || c.columnDef.field }}
                                     </span>
                                     <span class="lk-datagrid-sort-icon">
                                         <span *ngIf="c.sortDef.dir === 'asc'" 
