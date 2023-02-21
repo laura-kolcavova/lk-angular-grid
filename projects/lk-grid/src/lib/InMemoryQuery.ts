@@ -1,4 +1,5 @@
 import { SortDefinition } from "./SortDefinition";
+import { FilterDefinition } from "./FilterDefinition";
 
 const compareValues = function(a: any, b: any): number
 {
@@ -69,6 +70,61 @@ export const orderBy = function<T>(data: T[], sort: SortDefinition[]): T[]
     return result;
 }
 
+export const filterBy = function<T>(data: T[], filter: FilterDefinition[]): T[]
+{
+    let result: T[] = [];
+
+    for (let i = 0; i < data.length; i++)
+    {
+        let item = data[i];
+        let addItem: boolean = true;
+
+        for (let j = 0; j < filter.length; j++)
+        {
+            let filterDef = filter[j];
+            let itemValue: any = item[filterDef.field as keyof typeof item];
+            let fulfill: boolean = false;
+
+            if (typeof(itemValue) === 'string')
+            {
+                if (filterDef.operator === 'eq')
+                {
+                    if (filterDef.caseSensitivy === 'ordinal')
+                    {
+                        if (itemValue === filterDef.value)
+                        {
+                            fulfill = true;
+                        }
+                    }
+                    else if (filterDef.caseSensitivy === 'ordinalignorecase')
+                    {
+                        if (itemValue.toLowerCase() === filterDef.value.toLowerCase())
+                        {
+                            fulfill = true;
+                        }
+                    }
+                    else 
+                    {
+                        fulfill = true;
+                    }
+                }
+            }
+            
+            if (fulfill === false)
+            {
+                addItem = false;
+            }
+        }
+
+        if (addItem === true)
+        {
+            result.push(item);
+        }
+    }
+
+    return result;
+}
+
 export const offset = function<T>(data: T[], offset: number): T[]
 {
     let result: T[] = data.slice(offset);
@@ -105,6 +161,7 @@ export interface InMemoryQuery<T>
     from: T[];
     select?: string[];
     orderBy?: SortDefinition[];
+    filterBy?: FilterDefinition[];
     offset?: number;
     limit?: number;
 }
@@ -119,6 +176,10 @@ export const executeQuery = function<T>(query: InMemoryQuery<T>): DataResult
 {
     let data: T[] = query.from.slice(0);
 
+    if (query.filterBy !== undefined) {
+        data = filterBy(data, query.filterBy);
+    }
+    
     if (query.select !== undefined)
     {
         data = select(data, query.select);

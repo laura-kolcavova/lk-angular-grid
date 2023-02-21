@@ -58,6 +58,14 @@
                             </span>
                         </th>
                     </tr>
+
+                    <tr>
+                        <td *ngFor="let f of getColumnFilters()">
+                            <span class="lk-datagrid-cell-content">
+                                <input class="lk-datagrid-input" [(ngModel)]="f.value" (keydown.enter)="applyFilter()" />
+                            </span>
+                        </td>
+                    </tr>
                 </thead>
             </table>
        </div>

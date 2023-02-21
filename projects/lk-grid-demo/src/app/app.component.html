@@ -6,7 +6,8 @@
         [data]="data"
         [totalItems]="totalItems"     
         [itemHeight]="50"
-        (sortChange)="onSort($event)"
+        (sortChange)="onSort($event)"  
+        (filterChange)="onFilter($event)"
         (segmentChange)="onSegmentChange($event)">
     </lk-grid>
 </div>

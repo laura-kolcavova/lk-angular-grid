@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ColumnDefinition } from 'dist/lk-grid/lib/ColumnDefinition';
+import { FilterChangeEvent } from 'dist/lk-grid/lib/Events';
 import { SegmentChangeEvent, SortChangeEvent } from 'projects/lk-grid/src/lib/Events';
 import { executeQuery, InMemoryQuery, orderBy, select } from 'projects/lk-grid/src/lib/InMemoryQuery';
 import { Person } from './Person';
@@ -49,9 +50,13 @@ export class AppComponent {
   public onSegmentChange(event: SegmentChangeEvent)
   {
     console.log(event);
-    // this.query.offset = event.offset;
-    // this.query.limit = event.limit;
-    // this.data = this.loadData();
+  }
+
+  public onFilter(event: FilterChangeEvent)
+  {
+      console.log(event);
+      this.query.filterBy = event.filter;
+      this.data = this.loadData();
   }
 
   private loadData(): any[]

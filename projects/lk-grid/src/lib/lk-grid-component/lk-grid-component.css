@@ -24,6 +24,13 @@
     box-sizing: border-box;
 }
 
+.lk-datagrid-main {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 :host(.lk-datagrid) table {
     width: 100%;
     border-spacing: 0;
@@ -54,19 +61,12 @@
     border-left-width: 0;
 }
 
-.lk-datagrid-column-sorted {
-    background-color: var(--column-headers-bg-color-second);
-}
-
 .lk-datagrid-table-fixed {
     table-layout: fixed;
 }
 
-.lk-datagrid-main {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+.lk-datagrid-column-sorted {
+    background-color: var(--column-headers-bg-color-second);
 }
 
 .lk-datagrid-column-headers {
@@ -82,33 +82,13 @@
     border-right: 1px solid var(--border-color);
 }
 
-.lk-datagrid-list {
-    background-color: var(--list-bg-color);
-    display: flex;
-    flex: 1 1 auto;
-    overflow: hidden;
-}
-
-.lk-datagrid-list-viewport {
-    flex: 1 1 auto;
-    min-height: 0;
-    width: 100%;
-    overflow: auto;
-    overflow-y: scroll;
-    overflow-x: auto;
-}
-
-.lk-datagrid-list-row-odd {
-    background-color: var(--list-bg-color-second)
-}
-
-.lk-datagrid-list tr:hover {
-    background-color: var(--list-bg-color-hover);
-}
-
 .lk-datagrid-cell-content {
     display: flex;
-    overflow: hidden;
+    overflow: hidden; 
+    align-items: center;
+}
+
+:host(.lk-datagrid) th .lk-datagrid-cell-content  {
     margin: -8px -12px;
 }
 
@@ -152,6 +132,43 @@
     font-variant: normal;
     font-weight: normal;
     line-height: 1;
+}
+
+.lk-datagrid-input {
+    width: 100%;
+    padding: 4px 8px;
+    color: #424242;
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    outline: 0;
+    font: inherit;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lk-datagrid-list {
+    background-color: var(--list-bg-color);
+    display: flex;
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+
+.lk-datagrid-list-viewport {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    overflow: auto;
+    overflow-y: scroll;
+    overflow-x: auto;
+}
+
+.lk-datagrid-list-row-odd {
+    background-color: var(--list-bg-color-second)
+}
+
+.lk-datagrid-list tr:hover {
+    background-color: var(--list-bg-color-hover);
 }
 
 /* .lk-icon-sort-asc::before {
